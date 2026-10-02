@@ -1,0 +1,474 @@
+/*
+ * Motion system. Durations follow four levels:
+ *   L1 micro 150–250ms · L2 component 300–600ms · L3 section 600–1000ms · L4 ambient (slow loops).
+ * Everything animates transform-family properties (translate/scale/rotate) or opacity only.
+ * Reveal states hide content only while <html data-motion> is set (by the inline head script),
+ * so no-JS and reduced-motion visitors always see everything.
+ */
+
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* ---------- L4 ambient: galaxy ---------- */
+
+.galaxy {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+.galaxy::before,
+.galaxy::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  will-change: transform;
+}
+/* Nebula: drifts a few percent over ~40s. */
+.galaxy::before {
+  inset: -15%;
+  background:
+    radial-gradient(circle at 25% 20%, rgb(139 92 246 / 0.18), transparent 34%),
+    radial-gradient(circle at 80% 30%, rgb(34 211 238 / 0.08), transparent 30%),
+    radial-gradient(circle at 68% 82%, rgb(124 58 237 / 0.1), transparent 38%),
+    radial-gradient(circle at 12% 72%, rgb(236 72 153 / 0.05), transparent 28%);
+  animation: nebula-drift 40s var(--ease-in-out) infinite alternate;
+}
+/* Stars: a tiled field taller than the viewport that slides one tile every 3 minutes. */
+.galaxy::after {
+  inset: -360px 0 0 0;
+  background-image:
+    radial-gradient(1px 1px at 24px 36px, rgb(255 255 255 / 0.55), transparent),
+    radial-gradient(1px 1px at 132px 92px, rgb(255 255 255 / 0.35), transparent),
+    radial-gradient(1.4px 1.4px at 212px 18px, rgb(196 181 253 / 0.6), transparent),
+    radial-gradient(1px 1px at 288px 156px, rgb(255 255 255 / 0.3), transparent),
+    radial-gradient(1px 1px at 64px 214px, rgb(255 255 255 / 0.4), transparent),
+    radial-gradient(1.2px 1.2px at 176px 264px, rgb(103 232 249 / 0.45), transparent),
+    radial-gradient(1px 1px at 330px 300px, rgb(255 255 255 / 0.35), transparent),
+    radial-gradient(1px 1px at 252px 340px, rgb(255 255 255 / 0.25), transparent);
+  background-size: 360px 360px;
+  animation:
+    twinkle 6s ease-in-out infinite alternate,
+    star-drift 180s linear infinite;
+}
+[data-theme="light"] .galaxy::before {
+  background:
+    radial-gradient(circle at 25% 20%, rgb(139 92 246 / 0.12), transparent 38%),
+    radial-gradient(circle at 80% 30%, rgb(34 211 238 / 0.08), transparent 30%);
+}
+[data-theme="light"] .galaxy::after {
+  display: none;
+}
+@media (pointer: coarse) {
+  /* Phones: keep the twinkle, skip the drift. */
+  .galaxy::after {
+    animation: twinkle 6s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes nebula-drift {
+  to {
+    transform: translate3d(3%, 2%, 0) scale(1.06);
+  }
+}
+@keyframes star-drift {
+  to {
+    transform: translate3d(0, 360px, 0);
+  }
+}
+@keyframes twinkle {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- Scroll-linked effects (CSS scroll timelines; skipped where unsupported) ---------- */
+
+.scroll-progress {
+  display: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Thin purple progress line at the very top. */
+    .scroll-progress {
+      display: block;
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 60;
+      height: 2px;
+      transform-origin: 0 50%;
+      background: linear-gradient(90deg, var(--color-brand-deep), var(--color-accent), var(--color-cyan));
+      box-shadow: 0 0 10px rgb(139 92 246 / 0.6);
+      animation: progress linear both;
+      animation-timeline: scroll(root);
+    }
+
+    /* Background parallax: the whole atmosphere eases upward as you scroll. */
+    .galaxy {
+      animation: galaxy-parallax linear both;
+      animation-timeline: scroll(root);
+    }
+
+    /* Hero recedes as it scrolls away. */
+    .hero-exit {
+      animation: hero-out linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+
+    /* Experience timeline draws downward with scroll. */
+    .tl {
+      view-timeline-name: --timeline;
+    }
+    .tl-line {
+      transform-origin: top;
+      animation: grow-y linear both;
+      animation-timeline: --timeline;
+      animation-range: entry 15% cover 75%;
+    }
+  }
+}
+
+@keyframes progress {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+@keyframes galaxy-parallax {
+  to {
+    translate: 0 -5vh;
+  }
+}
+@keyframes hero-out {
+  50% {
+    opacity: 0.85;
+    scale: 0.98;
+    translate: 0 -20px;
+  }
+  100% {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 -50px;
+  }
+}
+@keyframes grow-y {
+  from {
+    scale: 1 0;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+/* ---------- L3 reveal (IntersectionObserver sets [data-shown]) ---------- */
+
+html[data-motion] [data-reveal]:not([data-shown]) {
+  opacity: 0;
+}
+html[data-motion] [data-reveal][data-shown] {
+  animation: reveal-up 800ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+html[data-motion] [data-reveal="scale"][data-shown] {
+  animation-name: reveal-scale;
+}
+html[data-motion] [data-reveal="left"][data-shown] {
+  animation-name: reveal-left;
+}
+
+/* Children choreographed after their parent appears. */
+html[data-motion] [data-shown] .reveal-mask {
+  animation: mask-up 900ms var(--ease-out) both;
+  animation-delay: 80ms;
+}
+html[data-motion] [data-shown] .reveal-sub {
+  animation: reveal-up 700ms var(--ease-out) both;
+  animation-delay: 220ms;
+}
+html[data-motion] [data-shown] .reveal-line {
+  transform-origin: left;
+  animation: grow-x 700ms var(--ease-out) both;
+  animation-delay: 120ms;
+}
+/* Badges: small scale + fade, staggered by --j. */
+html[data-motion] [data-shown] .pop > li {
+  animation: pop 450ms var(--ease-out) both;
+  animation-delay: calc(250ms + var(--j, 0) * 35ms);
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+  }
+}
+@keyframes reveal-scale {
+  from {
+    opacity: 0;
+    scale: 0.95;
+    translate: 0 12px;
+  }
+}
+@keyframes reveal-left {
+  from {
+    opacity: 0;
+    translate: -28px 0;
+  }
+}
+@keyframes mask-up {
+  from {
+    clip-path: inset(0 0 100% 0);
+    translate: 0 0.4em;
+  }
+  to {
+    clip-path: inset(0 0 -0.2em 0);
+  }
+}
+@keyframes grow-x {
+  from {
+    scale: 0 1;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    scale: 0.85;
+  }
+}
+
+/* Timeline nodes switch on as their item enters. */
+.tl-dot {
+  transition:
+    border-color 500ms var(--ease-out),
+    box-shadow 500ms var(--ease-out),
+    scale 500ms var(--ease-out);
+  transition-delay: 250ms;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 4px rgb(139 92 246 / 0.2), 0 0 18px rgb(139 92 246 / 0.5);
+  scale: 1.1;
+}
+html[data-motion] [data-reveal]:not([data-shown]) > .tl-dot {
+  border-color: var(--color-line-strong);
+  box-shadow: none;
+  scale: 1;
+}
+
+/* ---------- Page load (L3) ---------- */
+
+[data-rise] {
+  animation: rise 700ms var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+/* Hero name: word-by-word mask reveal. */
+.word-mask {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+  vertical-align: top;
+}
+.word {
+  display: inline-block;
+  animation: word-up 1000ms var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes word-up {
+  from {
+    translate: 0 110%;
+  }
+}
+
+/* Portrait: wipe up, then settle from a slight zoom. */
+.photo-reveal {
+  animation: photo-wipe 1100ms var(--ease-out) both;
+  animation-delay: 250ms;
+}
+.photo-reveal img {
+  animation: photo-settle 1400ms var(--ease-out) both;
+  animation-delay: 250ms;
+}
+@keyframes photo-wipe {
+  from {
+    clip-path: inset(100% 0 0 0 round 1.7rem);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 1.7rem);
+  }
+}
+@keyframes photo-settle {
+  from {
+    scale: 1.08;
+  }
+}
+
+/* Header drops in; nav items stagger after it. */
+.nav-drop {
+  animation: drop-in 600ms var(--ease-out) both;
+}
+.nav-stagger > li {
+  animation: drop-in 500ms var(--ease-out) both;
+  animation-delay: calc(150ms + var(--i, 0) * 50ms);
+}
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    translate: 0 -10px;
+  }
+}
+
+/* Mobile menu items cascade in when opened. */
+#mobile-nav:not([hidden]) li {
+  animation: reveal-up 450ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+/* Content swapped by interaction (architecture detail, opened accordions). */
+.swap-in {
+  animation: swap-in 350ms var(--ease-out) both;
+}
+@keyframes swap-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+
+/* ---------- L1/L2 interaction ---------- */
+
+/* Click ripple (spans are injected by <Effects />). */
+.ripple-host {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.ripple {
+  position: absolute;
+  z-index: -1;
+  border-radius: 9999px;
+  pointer-events: none;
+  translate: -50% -50%;
+  background: radial-gradient(circle, rgb(167 139 250 / 0.45), rgb(139 92 246 / 0) 70%);
+  animation: ripple 550ms var(--ease-out) forwards;
+}
+@keyframes ripple {
+  from {
+    scale: 0;
+    opacity: 1;
+  }
+  to {
+    scale: 1;
+    opacity: 0;
+  }
+}
+
+/* Animated underline for text links. */
+.u-link {
+  background-image: linear-gradient(var(--color-accent), var(--color-accent));
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  transition: background-size 250ms var(--ease-out);
+}
+a:hover .u-link,
+a:focus-visible .u-link {
+  background-size: 100% 1px;
+}
+
+/* Subtle 3D tilt for featured cards (--rx/--ry set by <Effects />, max ±3deg). */
+.tilt {
+  transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px));
+  transition:
+    transform 400ms var(--ease-out),
+    border-color 250ms ease,
+    box-shadow 250ms ease;
+}
+.tilt:hover {
+  --lift: -6px;
+}
+/* Featured-card badges nudge up in sequence on hover. */
+.nudge > li {
+  transition: translate 300ms var(--ease-out);
+  transition-delay: calc(var(--j, 0) * 25ms);
+}
+.tilt:hover .nudge > li {
+  translate: 0 -2px;
+}
+
+/* Section continuity: a faint purple seam with a soft glow beneath. */
+.section-seam {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 160px;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgb(139 92 246 / 0.28), transparent) top / min(70%, 820px) 1px no-repeat,
+    radial-gradient(ellipse 45% 100% at 50% 0%, rgb(139 92 246 / 0.07), transparent 70%);
+}
+
+/* Desktop hero glow that trails the cursor (positioned by <Effects />). */
+.hero-glow {
+  display: none;
+}
+html[data-cursor] .hero-glow {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(139 92 246 / 0.16), rgb(34 211 238 / 0.04) 45%, transparent 70%);
+  opacity: 0;
+  transition: opacity 600ms ease;
+  will-change: transform;
+}
+html[data-cursor] .hero-glow[data-active] {
+  opacity: 1;
+}
+
+/* ---------- Reduced motion: everything static, nothing hidden ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .galaxy,
+  .galaxy::before,
+  .galaxy::after,
+  .hero-exit,
+  .tl-line,
+  [data-rise],
+  .word,
+  .photo-reveal,
+  .photo-reveal img,
+  .nav-drop,
+  .nav-stagger > li,
+  .swap-in {
+    animation: none !important;
+  }
+  .scroll-progress,
+  .hero-glow {
+    display: none !important;
+  }
+  .tilt {
+    transform: none !important;
+  }
+}

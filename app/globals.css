@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+
+@theme {
+  /* Midnight Purple. Purple is the dominant accent; cyan and pink are rare highlights. */
+  --color-bg: #09090b;
+  --color-bg-2: #0f0f12;
+  --color-section: #12111a;
+  --color-surface: #18181b;
+  --color-surface-2: #1f1b2e;
+  --color-elevated: #1c1926;
+  --color-line: #27272a;
+  --color-line-strong: #3f3f46;
+  --color-fg: #fafafa;
+  --color-muted: #d4d4d8;
+  --color-subtle: #a1a1aa;
+  --color-disabled: #71717a;
+
+  /* Text accent uses the lighter purple so small labels stay above 4.5:1 contrast. */
+  --color-accent: #a78bfa;
+  --color-accent-strong: #c4b5fd;
+  --color-brand: #8b5cf6;
+  --color-brand-deep: #7c3aed;
+  --color-brand-dark: #6d28d9;
+  --color-cyan: #22d3ee;
+  --color-cyan-bright: #67e8f9;
+  --color-pink: #ec4899;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Light theme: same purple identity on soft white; accents darken for contrast. */
+[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #fafafa;
+  --color-bg-2: #f4f4f5;
+  --color-section: #f5f3ff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f5f3ff;
+  --color-elevated: #faf8ff;
+  --color-line: #e4e4e7;
+  --color-line-strong: #d4d4d8;
+  --color-fg: #09090b;
+  --color-muted: #3f3f46;
+  --color-subtle: #52525b;
+  --color-disabled: #71717a;
+  --color-accent: #6d28d9;
+  --color-accent-strong: #5b21b6;
+  --color-brand: #7c3aed;
+  --color-brand-deep: #6d28d9;
+  --color-brand-dark: #5b21b6;
+  --color-cyan: #0891b2;
+  --color-cyan-bright: #0e7490;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgb(139 92 246 / 0.35);
+    color: var(--color-fg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
+
+/* Component classes live in a layer so Tailwind utilities can override them. */
+@layer components {
+  /* Premium surface card: purple border, faint glow and a small lift on hover. */
+  .card {
+    border-radius: 1.25rem;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    transition:
+      border-color 250ms ease,
+      box-shadow 250ms ease,
+      transform 250ms ease,
+      background-color 250ms ease;
+  }
+  .card-hover:hover {
+    border-color: rgb(139 92 246 / 0.3);
+    box-shadow: 0 0 0 1px rgb(139 92 246 / 0.08), 0 12px 40px -12px rgb(139 92 246 / 0.25);
+  }
+  .card-hover:not(.tilt):hover {
+    transform: translateY(-3px);
+  }
+
+  /* Selective glassmorphism (nav, floating badges). */
+  .glass {
+    background-color: color-mix(in srgb, var(--color-surface) 65%, transparent);
+    border: 1px solid rgb(139 92 246 / 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  /* Cursor-following highlight; --mx/--my are set by <Effects />. */
+  .spotlight {
+    position: relative;
+    isolation: isolate;
+  }
+  .spotlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 300ms ease;
+    background: radial-gradient(
+      420px circle at var(--mx, 50%) var(--my, 50%),
+      rgb(139 92 246 / 0.1),
+      transparent 60%
+    );
+    pointer-events: none;
+  }
+  .spotlight:hover::before {
+    opacity: 1;
+  }
+}
+
+/* Data flowing along diagram edges. */
+@keyframes flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.flow-line {
+  stroke-dasharray: 4 8;
+  animation: flow 1.2s linear infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.pulse-dot {
+  animation: pulse-dot 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .packet {
+    display: none;
+  }
+  .card-hover:not(.tilt):hover {
+    transform: none;
+  }
+}
