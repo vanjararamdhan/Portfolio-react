@@ -379,6 +379,90 @@ html[data-motion] [data-reveal]:not([data-shown]) > .tl-dot {
   }
 }
 
+/* Architecture section deepens into a darker "system" space as it scrolls in. */
+.immersive {
+  isolation: isolate;
+}
+.immersive::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 45%, rgb(124 58 237 / 0.14), transparent 70%),
+    linear-gradient(to bottom, transparent, rgb(9 9 11 / 0.65) 18%, rgb(9 9 11 / 0.65) 82%, transparent);
+}
+[data-theme="light"] .immersive::before {
+  background: radial-gradient(ellipse 70% 55% at 50% 45%, rgb(124 58 237 / 0.08), transparent 70%);
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .immersive::before {
+      animation: immerse linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 70%;
+    }
+  }
+}
+@keyframes immerse {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Fullscreen "explore architecture" dialog. */
+.immersive-dialog::backdrop {
+  background: rgb(9 9 11 / 0.7);
+  backdrop-filter: blur(6px);
+}
+.immersive-dialog[open] {
+  animation: dialog-in 400ms var(--ease-out) both;
+}
+html:has(.immersive-dialog[open]) {
+  overflow: hidden;
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+}
+
+/* Fine film grain over everything for depth (static, ~1KB SVG). */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: -5;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+[data-theme="light"] .grain {
+  opacity: 0.03;
+}
+
+/* Flow diagrams: arrows pulse in sequence so data visibly travels left to right. */
+.flow-arrow {
+  animation: flow-pulse 2.4s var(--ease-in-out) infinite;
+  animation-delay: calc(var(--k, 0) * 300ms);
+}
+@keyframes flow-pulse {
+  0%, 60%, 100% {
+    opacity: 0.35;
+    translate: 0 0;
+  }
+  25% {
+    opacity: 1;
+    translate: 3px 0;
+  }
+}
+
+/* Magnetic CTAs: drift a few px toward the cursor (--mgx/--mgy set by <Effects />). */
+[data-magnetic] {
+  transform: translate3d(var(--mgx, 0px), var(--mgy, 0px), 0);
+}
+
 /* Animated underline for text links. */
 .u-link {
   background-image: linear-gradient(var(--color-accent), var(--color-accent));
@@ -461,14 +545,18 @@ html[data-cursor] .hero-glow[data-active] {
   .photo-reveal img,
   .nav-drop,
   .nav-stagger > li,
-  .swap-in {
+  .swap-in,
+  .flow-arrow,
+  .immersive::before,
+  .immersive-dialog[open] {
     animation: none !important;
   }
   .scroll-progress,
   .hero-glow {
     display: none !important;
   }
-  .tilt {
+  .tilt,
+  [data-magnetic] {
     transform: none !important;
   }
 }

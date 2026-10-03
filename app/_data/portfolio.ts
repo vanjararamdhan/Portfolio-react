@@ -26,7 +26,6 @@ export const navItems: NavItem[] = [
   { id: "projects", label: "Projects" },
   { id: "architecture", label: "Architecture" },
   { id: "skills", label: "Skills" },
-  { id: "education", label: "Education" },
   { id: "contact", label: "Contact" },
 ];
 
@@ -195,18 +194,21 @@ export type FeaturedProject = {
   location?: string;
   company: string;
   role: string;
+  /** One line on what the product is. */
+  context: string;
   problem: string;
   built: string[];
   achievement: { value: string; label: string };
   stack: string[];
-  /** Optional pipeline rendered as a mini flow diagram. */
-  flow?: string[];
+  /** Pipeline rendered as a mini flow diagram (simplified from the work described). */
+  flow: string[];
   modules?: string[];
 };
 
 export const featuredProjects: FeaturedProject[] = [
   {
     id: "andbeyond",
+    context: "Travel & tourism platform for a South African client, kept in sync with Zoho CRM and Zoho Desk.",
     name: "AndBeyond",
     industry: "Travel & Tourism",
     location: "South Africa",
@@ -227,12 +229,14 @@ export const featuredProjects: FeaturedProject[] = [
   },
   {
     id: "ict-billing",
+    context: "Billing & subscription platform where customers combine multiple services on recurring plans.",
+    flow: ["Service selection", "Subscription plan", "Usage & user tier", "Charge calculation", "Invoice"],
     name: "ICT Billing",
     industry: "Billing & Subscriptions",
     company: "Odek Appcraft",
     role: "Billing logic & full-stack delivery",
     problem:
-      "Customers combine multiple services on recurring plans, so every charge depends on usage, subscription value and the user's tier.",
+      "Every charge depends on usage, subscription value and the user's type/tier, across both recurring and usage-based billing cycles.",
     built: [
       "Billing logic for multi-service selection with recurring subscription plans.",
       "Charge calculation driven by usage, subscription value and user type/tier.",
@@ -244,13 +248,15 @@ export const featuredProjects: FeaturedProject[] = [
   },
   {
     id: "proginter",
+    context: "Platform for server sales, domain registration and hosting services for an Israeli client.",
+    flow: ["Server / domain / hosting order", "Payment (PayPal · Tranzila)", "Invoice (Green Invoice)"],
     name: "Proginter",
     industry: "Server, Domain & Hosting Services",
     location: "Israel",
     company: "Koli Infotech",
     role: "Full lifecycle owner",
     problem:
-      "A platform selling servers, domain registration and hosting needed secure payments and invoicing built in from day one.",
+      "Server, domain and hosting sales needed secure billing: multiple payment gateways plus automated invoicing, all behind token-based API authentication.",
     built: [
       "Owned the project end to end, from requirements to deployment.",
       "Integrated PayPal and Tranzila payment gateways and Green Invoice invoicing with token-based API authentication.",
@@ -435,6 +441,9 @@ export const leadership: LeadershipItem[] = [
   { title: "Client communication", text: "Primary technical point of contact for international clients." },
   { title: "End-to-end ownership", text: "Requirements → design → delivery, with Agile/Scrum and Jira sprints." },
 ];
+
+/** Simplified shape of the LLM prototype work. */
+export const aiFlow = ["Application", "LLM API (OpenAI · Claude)", "Processing", "Product feature"];
 
 export const aiPoints: string[] = [
   "Built a demo application integrating OpenAI and Claude APIs to prototype AI-assisted product features.",

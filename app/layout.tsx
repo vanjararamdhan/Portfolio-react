@@ -84,6 +84,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="font-sans">
         <div aria-hidden className="galaxy" />
+        <div aria-hidden className="grain" />
         <Navbar />
         <main id="main">{children}</main>
         <Footer />

@@ -1,4 +1,5 @@
-import type { AnchorHTMLAttributes, CSSProperties, ReactNode } from "react";
+import { Fragment, type AnchorHTMLAttributes, type CSSProperties, type ReactNode } from "react";
+import { LuArrowRight } from "react-icons/lu";
 import { TechIcon } from "./tech-icon";
 
 /** Typed inline CSS custom properties, e.g. stagger indexes for the motion system. */
@@ -54,6 +55,34 @@ export function ChipList({ items, className = "", label, nudge = false }: { item
   );
 }
 
+/** Left-to-right pipeline of steps; arrows pulse in sequence to show data moving. */
+export function Flow({ steps }: { steps: string[] }) {
+  return (
+    <ol
+      aria-label="Data flow"
+      className="pop flex flex-col items-stretch gap-2 rounded-xl border border-line bg-bg/60 p-4 sm:flex-row sm:flex-wrap sm:items-center"
+    >
+      {steps.map((step, i) => (
+        <Fragment key={step}>
+          <li
+            style={vars({ "--j": i * 2 })}
+            className={`rounded-lg border px-3 py-2 text-center font-mono text-xs ${
+              i === 1 ? "border-accent/50 bg-accent/10 text-accent-strong" : "border-line-strong bg-surface-2 text-fg"
+            }`}
+          >
+            {step}
+          </li>
+          {i < steps.length - 1 && (
+            <li aria-hidden style={vars({ "--j": i * 2 + 1 })} className="flex justify-center text-accent">
+              <LuArrowRight className="flow-arrow size-4 rotate-90 sm:rotate-0" style={vars({ "--k": i })} />
+            </li>
+          )}
+        </Fragment>
+      ))}
+    </ol>
+  );
+}
+
 /** Technology tag; shows the technology's logo when one is known. */
 export function Chip({ children }: { children: string }) {
   return (
@@ -79,7 +108,7 @@ const variants = {
 export function ButtonLink({ variant = "primary", className = "", children, ...props }: ButtonLinkProps) {
   return (
     <a
-      className={`ripple-host group inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-medium transition-[background-color,border-color,color,box-shadow,translate,scale,filter] duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] ${variants[variant]} ${className}`}
+      className={`ripple-host group inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-medium transition-[background-color,border-color,color,box-shadow,translate,scale,filter,transform] duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] ${variants[variant]} ${className}`}
       {...props}
     >
       {children}

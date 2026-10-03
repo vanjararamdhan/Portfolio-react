@@ -9,13 +9,14 @@ declare global {
 }
 
 const MAX_TILT = 3; // degrees
+const MAGNET = 6; // px
 
 /**
  * Page-wide motion engine, wired once:
  *  - scroll reveal: IntersectionObserver marks [data-reveal] with [data-shown]; a MutationObserver
  *    picks up nodes React/HMR swaps in, so nothing can stay hidden
  *  - click ripple on .ripple-host elements
- *  - desktop only: spotlight cards, inertial hero glow, ±3° card tilt.
+ *  - desktop only: spotlight cards, inertial hero glow, ±3° card tilt, magnetic CTAs.
  *    Pointer work happens in a single rAF loop that sleeps when the cursor is still.
  */
 export default function Effects() {
@@ -78,6 +79,7 @@ export default function Effects() {
       let gy = 0;
       let raf = 0;
       let tiltEl: HTMLElement | null = null;
+      let magnetEl: HTMLElement | null = null;
 
       // Eases the hero glow toward the cursor; the loop sleeps once it has caught up.
       const tick = () => {
@@ -99,6 +101,13 @@ export default function Effects() {
         tiltEl.style.removeProperty("--rx");
         tiltEl.style.removeProperty("--ry");
         tiltEl = null;
+      };
+
+      const resetMagnet = () => {
+        if (!magnetEl) return;
+        magnetEl.style.removeProperty("--mgx");
+        magnetEl.style.removeProperty("--mgy");
+        magnetEl = null;
       };
 
       const onMove = (e: PointerEvent) => {
@@ -124,12 +133,24 @@ export default function Effects() {
           tiltEl = tilt;
         }
 
+        const magnet = target?.closest<HTMLElement>("[data-magnetic]") ?? null;
+        if (magnet !== magnetEl) resetMagnet();
+        if (magnet) {
+          const rect = magnet.getBoundingClientRect();
+          const dx = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+          const dy = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+          magnet.style.setProperty("--mgx", `${(dx * MAGNET).toFixed(1)}px`);
+          magnet.style.setProperty("--mgy", `${(dy * MAGNET * 0.6).toFixed(1)}px`);
+          magnetEl = magnet;
+        }
+
         if (glow && hero) glow.toggleAttribute("data-active", hero.contains(target));
         if (!raf) raf = requestAnimationFrame(tick);
       };
       const onLeave = () => {
         glow?.removeAttribute("data-active");
         resetTilt();
+        resetMagnet();
       };
 
       document.addEventListener("pointermove", onMove, { passive: true });

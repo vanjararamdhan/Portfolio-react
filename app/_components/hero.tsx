@@ -83,30 +83,39 @@ export default function Hero() {
             Senior Software Engineer <span className="text-subtle">— Backend / Full Stack</span>
           </p>
 
-          <p data-rise style={vars({ "--d": "520ms" })} className="mt-6 max-w-xl text-base leading-relaxed text-subtle sm:text-lg">
-            I build scalable backend systems that handle real-world complexity: microservices, event-driven Kafka
-            pipelines and the REST/GraphQL APIs on top of them. 4+ years shipping secure Node.js and TypeScript
-            products for international clients in travel, insurance, billing, healthcare and enterprise AI.
+          <p data-rise style={vars({ "--d": "500ms" })} className="mt-6 text-xl font-medium tracking-tight text-fg sm:text-2xl">
+            I build systems that scale beyond the happy path.
           </p>
 
-          <div data-rise style={vars({ "--d": "620ms" })} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <ButtonLink href="#projects">
-              View My Work
-              <LuArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-0.5" />
+          <p data-rise style={vars({ "--d": "580ms" })} className="mt-3 max-w-xl text-base leading-relaxed text-subtle sm:text-lg">
+            4+ years building Node.js and TypeScript systems for international clients: microservices,
+            event-driven Kafka pipelines, REST/GraphQL APIs and cloud applications across travel, insurance,
+            billing, healthcare and enterprise AI.
+          </p>
+
+          <div data-rise style={vars({ "--d": "660ms" })} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <ButtonLink href="#projects" data-magnetic>
+              Explore My Work
+              <LuArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
             </ButtonLink>
-            <ButtonLink href={RESUME_PATH} download variant="secondary">
-              <LuDownload aria-hidden className="size-4" />
+            <ButtonLink href={RESUME_PATH} download variant="secondary" data-magnetic>
+              <LuDownload aria-hidden className="size-4 transition-transform group-hover:translate-y-0.5" />
               Download Resume
             </ButtonLink>
-            <SocialLinks className="sm:ml-2" />
+            <a href="#contact" className="group inline-flex min-h-11 items-center justify-center gap-1.5 px-2 text-sm font-medium text-subtle transition-colors hover:text-fg">
+              <span className="u-link">Let&apos;s Connect</span>
+              <LuArrowRight aria-hidden className="size-4 transition-transform duration-200 group-hover:translate-x-1" />
+            </a>
           </div>
 
-          <div data-rise style={vars({ "--d": "720ms" })} className="mt-9">
+          <SocialLinks className="mt-6" />
+
+          <div data-rise style={vars({ "--d": "760ms" })} className="mt-8">
             <p className="mb-3 font-mono text-[0.7rem] uppercase tracking-wider text-subtle">Core stack</p>
             <ChipList items={coreStack} label="Core stack" className="gap-2" />
           </div>
 
-          <p data-rise style={vars({ "--d": "800ms" })} className="mt-8 text-xs text-subtle">
+          <p data-rise style={vars({ "--d": "840ms" })} className="mt-8 text-xs text-subtle">
             <span className="font-mono uppercase tracking-wider">Experience at</span>{" "}
             <span className="text-muted">{experiences.map((e) => e.company).join(" · ")}</span>
           </p>

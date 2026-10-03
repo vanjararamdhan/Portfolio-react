@@ -1,7 +1,7 @@
 import type { IconType } from "react-icons";
 import { LuBot, LuClipboardList, LuCompass, LuGitPullRequest, LuMessagesSquare, LuTarget, LuUsers } from "react-icons/lu";
-import { aiPoints, leadership } from "../_data/portfolio";
-import { Section, vars } from "./ui";
+import { aiFlow, aiPoints, leadership } from "../_data/portfolio";
+import { Flow, Section, vars } from "./ui";
 
 const icons: IconType[] = [LuUsers, LuCompass, LuGitPullRequest, LuClipboardList, LuMessagesSquare, LuTarget];
 
@@ -11,7 +11,7 @@ export default function Leadership() {
       id="leadership"
       index="07"
       eyebrow="Beyond coding"
-      title="Leadership & ownership"
+      title="Engineering beyond code"
       intro="Seniority shows up before and after the code: in the decisions, the reviews and the conversations with clients."
     >
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
@@ -46,6 +46,9 @@ export default function Leadership() {
           <p className="mt-2 text-sm leading-relaxed text-muted">
             A software engineer who integrates AI capabilities into applications, and uses AI tools to ship faster.
           </p>
+          <div className="mt-6">
+            <Flow steps={aiFlow} />
+          </div>
           <ul className="mt-6 space-y-3">
             {aiPoints.map((p) => (
               <li key={p} className="flex gap-3 text-sm leading-relaxed text-muted">

@@ -32,16 +32,22 @@ export default function Contact() {
             Let&apos;s build something reliable.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-            I&apos;m open to roles where I can contribute to backend architecture, distributed systems, APIs and
-            full-stack product development, and I can start immediately.
+            Open to opportunities involving backend architecture, distributed systems, APIs and full-stack product
+            development. Immediate joiner.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-            <ButtonLink href={mailto}>
-              Start a Conversation
+            <ButtonLink href={mailto} data-magnetic>
+              <LuMail aria-hidden className="size-4" />
+              Email Me
               <LuArrowUpRight aria-hidden className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </ButtonLink>
-            <ButtonLink href={RESUME_PATH} download variant="secondary">
-              <LuDownload aria-hidden className="size-4" />
+            <ButtonLink href={profile.linkedIn} target="_blank" rel="noopener noreferrer" variant="secondary" data-magnetic>
+              <FaLinkedinIn aria-hidden className="size-4" />
+              LinkedIn
+              <span className="sr-only">(opens in a new tab)</span>
+            </ButtonLink>
+            <ButtonLink href={RESUME_PATH} download variant="secondary" data-magnetic>
+              <LuDownload aria-hidden className="size-4 transition-transform group-hover:translate-y-0.5" />
               Download Resume
             </ButtonLink>
           </div>

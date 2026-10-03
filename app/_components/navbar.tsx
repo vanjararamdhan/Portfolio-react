@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LuArrowUpRight, LuMenu, LuX } from "react-icons/lu";
-import { navItems, profile } from "../_data/portfolio";
+import { LuDownload, LuMenu, LuX } from "react-icons/lu";
+import { RESUME_PATH, navItems, profile } from "../_data/portfolio";
 import ThemeToggle from "./theme-toggle";
 import { ButtonLink, Container, vars } from "./ui";
 
@@ -101,9 +101,9 @@ export default function Navbar() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <span className="hidden sm:block">
-            <ButtonLink href="/#contact" variant="secondary" className="min-h-9! whitespace-nowrap px-3.5!">
-              Let&apos;s Connect
-              <LuArrowUpRight aria-hidden className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            <ButtonLink href={RESUME_PATH} download variant="secondary" className="min-h-9! whitespace-nowrap px-3.5!">
+              <LuDownload aria-hidden className="size-4 transition-transform group-hover:translate-y-0.5" />
+              Resume
             </ButtonLink>
           </span>
           <button
@@ -141,9 +141,15 @@ export default function Navbar() {
               </li>
             ))}
           </ul>
-          <ButtonLink href="/#contact" onClick={() => setOpen(false)} className="mt-8 w-full">
-            Let&apos;s Connect
-          </ButtonLink>
+          <div className="mt-8 grid gap-3">
+            <ButtonLink href={RESUME_PATH} download onClick={() => setOpen(false)} className="w-full">
+              <LuDownload aria-hidden className="size-4" />
+              Download Resume
+            </ButtonLink>
+            <ButtonLink href="/#contact" variant="secondary" onClick={() => setOpen(false)} className="w-full">
+              Let&apos;s Connect
+            </ButtonLink>
+          </div>
         </Container>
       </nav>
     </header>

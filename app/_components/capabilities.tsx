@@ -20,7 +20,7 @@ export default function Capabilities() {
       id="expertise"
       index="02"
       eyebrow="What I do"
-      title="Engineering profile"
+      title="What I build"
       intro="The backend is my home, but I own delivery end to end, including the frontend when a product needs it."
     >
       <ul className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
