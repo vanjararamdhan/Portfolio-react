@@ -1,37 +1,46 @@
-import { LuAward, LuGraduationCap } from "react-icons/lu";
 import { certifications, education } from "../_data/portfolio";
 import { Section, vars } from "./ui";
 
 export default function Education() {
   return (
-    <Section id="education" index="08" eyebrow="Education" title="Background">
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <ul className="grid gap-4 sm:grid-cols-2">
-          {education.map((e, i) => (
-            <li key={e.degree} data-reveal style={vars({ "--i": i })} className="card card-hover spotlight group p-6">
-              <div className="flex items-center justify-between">
-                <LuGraduationCap aria-hidden className="size-5 text-accent transition-transform duration-300 group-hover:-rotate-12 group-hover:scale-110" />
-                <span className="font-mono text-xs text-subtle">{e.period}</span>
-              </div>
-              <h3 className="mt-5 text-2xl font-semibold tracking-tight text-fg">{e.degree}</h3>
-              <p className="mt-1 text-sm text-muted">{e.name}</p>
-              <p className="mt-4 border-t border-line pt-4 text-sm text-fg/90">{e.institution}</p>
-            </li>
-          ))}
-        </ul>
-
-        <div data-reveal style={vars({ "--i": 2 })} className="card card-hover p-6">
-          <h3 className="flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-subtle">
-            <LuAward aria-hidden className="size-4 text-accent" />
-            Certifications & training
-          </h3>
-          <ul className="mt-5 space-y-4">
-            {certifications.map((c) => (
-              <li key={c} className="border-l border-line-strong pl-3 text-sm leading-relaxed text-fg/90">
-                {c}
+    <Section
+      id="education"
+      index="06"
+      eyebrow="Education"
+      tone="#0d0d0c"
+      title={
+        <>
+          Education & <em className="text-accent">certifications.</em>
+        </>
+      }
+    >
+      <div className="grid gap-12 lg:grid-cols-[14rem_1fr] lg:gap-10">
+        <div aria-hidden className="hidden lg:block" />
+        <div className="grid gap-12 md:grid-cols-[1.5fr_1fr] md:gap-14">
+          <ul className="border-t border-line">
+            {education.map((e, i) => (
+              <li key={e.degree} data-reveal style={vars({ "--i": i })} className="grid grid-cols-[5rem_1fr] gap-4 border-b border-line py-6 sm:grid-cols-[7rem_1fr]">
+                <p className="display text-5xl text-accent">{e.degree}</p>
+                <div>
+                  <h3 className="text-base font-medium text-fg">{e.name}</h3>
+                  <p className="mt-1 text-sm text-muted">{e.institution}</p>
+                  <p className="label mt-2">{e.period}</p>
+                </div>
               </li>
             ))}
           </ul>
+
+          <div data-reveal style={vars({ "--i": 2 })}>
+            <h3 className="label border-b border-line pb-3">Certifications</h3>
+            <ul>
+              {certifications.map((c) => (
+                <li key={c.name} className="border-b border-line py-4">
+                  <p className="text-sm font-medium text-fg">{c.name}</p>
+                  <p className="mt-0.5 text-xs text-subtle">{c.issuer}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </Section>

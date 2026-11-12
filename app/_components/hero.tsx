@@ -1,130 +1,167 @@
+"use client";
+
 import Image from "next/image";
-import { LuArrowRight, LuDownload } from "react-icons/lu";
-import { RESUME_PATH, experiences, profile } from "../_data/portfolio";
+import { useRef } from "react";
+import { LuArrowDownRight, LuDownload } from "react-icons/lu";
+import { PHOTO_PATH, RESUME_FILENAME, RESUME_PATH, profile } from "../_data/portfolio";
+import { MQ, ScrollTrigger, gsap, useGSAP, whenIntroDone } from "../_lib/motion";
 import SocialLinks from "./social-links";
-import { TechIcon } from "./tech-icon";
-import { ButtonLink, ChipList, Container, vars } from "./ui";
+import { ButtonLink, Container } from "./ui";
 
-const PHOTO = "/ramdhan-vanjara.jpg";
-const coreStack = ["Node.js", "TypeScript", "Express.js", "Apache Kafka", "GraphQL", "MySQL", "MongoDB", "AWS", "Kubernetes"];
-
-function PhotoComposition() {
+/** One line of the name, a clipping mask per letter so each can rise into place (and later scatter). */
+function NameWord({ word, className = "" }: { word: string; className?: string }) {
   return (
-    <div data-tilt className="tilt relative mx-auto w-full max-w-[18rem] xl:max-w-[19.5rem]">
-      <div aria-hidden className="absolute -inset-10 -z-10 rounded-full bg-brand/25 blur-[90px]" />
-      <div aria-hidden className="absolute -bottom-6 -right-8 -z-10 size-32 rounded-full bg-cyan/10 blur-3xl" />
-
-      {/* Gradient ring around the portrait. */}
-      <div className="rounded-[1.75rem] bg-gradient-to-br from-brand/70 via-line-strong/40 to-cyan/40 p-px shadow-2xl shadow-black/50">
-        <div className="photo-reveal relative aspect-[4/5] overflow-hidden rounded-[1.7rem] bg-surface">
-          <Image
-            src={PHOTO}
-            alt={`${profile.name}, Senior Software Engineer`}
-            fill
-            priority
-            sizes="(min-width: 1280px) 312px, (min-width: 1024px) 288px, 0px"
-            className="object-cover object-[50%_35%]"
-          />
-        </div>
-      </div>
-
-      <div className="glass absolute -bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-2 shadow-xl shadow-black/40">
-        {["Node.js", "TypeScript", "Apache Kafka", "AWS"].map((t) => (
-          <TechIcon key={t} name={t} brand className="size-4" />
-        ))}
-        <span className="ml-1 font-mono text-[0.7rem] text-muted">4+ yrs in production</span>
-      </div>
-    </div>
+    <span className={`block ${className}`}>
+      {[...word].map((ch, i) => (
+        <span key={i} className="hero-mask inline-block overflow-x-visible overflow-y-clip pb-[0.14em] -mb-[0.14em] align-top">
+          <span className="hero-char inline-block">{ch}</span>
+        </span>
+      ))}
+    </span>
   );
 }
 
 export default function Hero() {
+  const root = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(MQ.motion, () => {
+        // Letters are pre-split in the markup (see <NameWord />), so nothing measures text at load.
+        const chars = gsap.utils.toArray<HTMLElement>(".hero-char");
+        const masks = gsap.utils.toArray<HTMLElement>(".hero-mask");
+
+        // Entrance, once the intro curtain lifts.
+        const intro = gsap.timeline({ paused: true });
+        intro
+          .set("[data-hero-hide]", { visibility: "visible" })
+          .from(chars, { yPercent: 120, rotate: 6, duration: 1.2, stagger: 0.035, ease: "expo.out" })
+          .fromTo(".hero-photo", { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.4, ease: "expo.inOut" }, 0.1)
+          .from(".hero-photo img", { scale: 1.3, duration: 1.8, ease: "expo.out" }, 0.1)
+          .from(".hero-fade", { autoAlpha: 0, y: 24, duration: 1, stagger: 0.08, ease: "power3.out" }, 0.45)
+          .from(".hero-cue", { autoAlpha: 0, duration: 0.8 }, 1.1);
+        const unlisten = whenIntroDone(() => intro.play());
+
+        // Exit (desktop): the hero holds while the name scatters and the portrait closes to a slit.
+        // The pin exists from the start (so page height never jumps), but the scrubbed animation is only
+        // built once the entrance has finished: it animates the same properties, and building it earlier
+        // would let it rewind them into the entrance's hidden starting state.
+        const exit = gsap.matchMedia();
+        exit.add(MQ.desktop, () => {
+          const pin = ScrollTrigger.create({ trigger: root.current, start: "top top", end: "+=75%", pin: true, anticipatePin: 1 });
+          // A trigger on an already-pinned element would measure from after the pin; borrow its range instead.
+          const range = { trigger: root.current, start: () => pin.start, end: () => pin.end };
+
+          let scrub: gsap.core.Timeline | null = null;
+          const build = () => {
+            // The letters' mask wrappers move (not the letters), so nothing is clipped as the name scatters.
+            const mid = (masks.length - 1) / 2;
+            scrub = gsap
+              .timeline({ scrollTrigger: { ...range, scrub: 0.8 }, defaults: { ease: "none" } })
+              .to(masks, { x: (i) => (i - mid) * 26, y: (i) => Math.sin(i * 1.7) * 70, rotate: (i) => (i - mid) * 3, autoAlpha: 0, stagger: { each: 0.004, from: "center" } }, 0)
+              .to(".hero-fade", { y: -60, autoAlpha: 0, stagger: 0.02 }, 0)
+              .to(".hero-photo", { clipPath: "inset(0% 47% 0% 47%)" }, 0.05)
+              .to(".hero-photo img", { scale: 1.25 }, 0.05)
+              .to(".hero-caption, .hero-cue", { autoAlpha: 0 }, 0);
+          };
+          if (intro.progress() === 1) build();
+          else intro.eventCallback("onComplete", build);
+
+          return () => {
+            intro.eventCallback("onComplete", null);
+            scrub?.scrollTrigger?.kill();
+            scrub?.kill();
+          };
+        });
+
+        return () => {
+          unlisten();
+          exit.revert();
+        };
+      });
+    },
+    { scope: root },
+  );
+
   return (
-    <section id="home" aria-labelledby="hero-heading" className="relative pt-28 pb-12 sm:pt-32 sm:pb-16 lg:pt-36 lg:pb-16">
-      <div aria-hidden className="hero-glow" />
-      <Container className="hero-exit grid items-center gap-14 lg:grid-cols-[1.4fr_1fr] lg:gap-16">
-        <div>
-          {/* Below desktop the photo collapses to an avatar so the hero stays compact. */}
-          <Image
-            data-rise
-            src={PHOTO}
-            alt=""
-            width={80}
-            height={80}
-            priority
-            className="mb-6 size-20 rounded-2xl border border-brand/40 object-cover object-[50%_30%] shadow-lg shadow-brand/20 lg:hidden"
-          />
+    <section ref={root} id="home" data-tone="#0d0d0c" aria-labelledby="hero-heading" className="relative flex min-h-svh flex-col justify-center pt-24 pb-16 lg:pt-20">
+      <Container>
+        <div className="grid items-center gap-12 lg:grid-cols-[1.35fr_1fr] lg:gap-16">
+          <figure data-hero-hide className="mx-auto w-full max-w-[16rem] sm:max-w-[20rem] lg:order-2 lg:mx-0 lg:ml-auto lg:max-w-[25rem]">
+            <div className="crop-marks">
+              <div className="hero-photo relative aspect-square overflow-hidden bg-surface">
+                <Image
+                  src={PHOTO_PATH}
+                  alt={`${profile.name}, ${profile.role}`}
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 400px, (min-width: 640px) 320px, 256px"
+                  className="object-cover"
+                />
+              </div>
+            </div>
+            <figcaption className="hero-caption label mt-5 flex items-center justify-between gap-4 whitespace-nowrap">
+              <span>
+                <span className="text-accent">Fig. 01</span> · {profile.location}
+              </span>
+              <span className="hidden lg:inline">Node.js · TypeScript · Kafka</span>
+            </figcaption>
+          </figure>
 
-          <p data-rise style={vars({ "--d": "80ms" })} className="glass mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs text-muted">
-            <span className="relative flex size-2" aria-hidden>
-              <span className="pulse-dot absolute inset-0 rounded-full bg-cyan" />
-              <span className="relative size-2 rounded-full bg-cyan" />
-            </span>
-            Available for opportunities · Immediate joiner<span className="hidden sm:inline"> · {profile.location}</span>
-          </p>
-
-          <h1 id="hero-heading" className="text-5xl font-semibold tracking-tight text-fg sm:text-6xl lg:text-7xl">
-            <span className="sr-only">{profile.name}</span>
-            <span aria-hidden className="flex flex-wrap gap-x-[0.25em]">
-              {profile.name.split(" ").map((word, i) => (
-                <span key={word} className="word-mask">
-                  <span
-                    className="word bg-gradient-to-br from-fg via-fg to-accent-strong bg-clip-text text-transparent"
-                    style={vars({ "--d": `${180 + i * 120}ms` })}
-                  >
-                    {word}
-                  </span>
+          <div className="lg:order-1">
+            <p data-hero-hide className="hero-fade label mb-6 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="inline-flex items-center gap-2 text-fg">
+                <span className="relative flex size-2" aria-hidden>
+                  <span className="pulse-dot absolute inset-0 rounded-full bg-live" />
+                  <span className="relative size-2 rounded-full bg-live" />
                 </span>
-              ))}
-            </span>
-          </h1>
+                Open to opportunities
+              </span>
+              <span aria-hidden>/</span>
+              <span>{profile.availability}</span>
+            </p>
 
-          <p data-rise style={vars({ "--d": "420ms" })} className="mt-4 text-lg font-medium text-accent sm:text-xl">
-            Senior Software Engineer <span className="text-subtle">— Backend / Full Stack</span>
-          </p>
+            <h1 id="hero-heading" className="display text-[4.5rem] text-fg sm:text-[7rem] lg:text-[8rem] xl:text-[9.5rem]">
+              <span className="sr-only">{profile.name}</span>
+              <span aria-hidden data-hero-hide className="block">
+                <NameWord word="Ramdhan" />
+                <NameWord word="Vanjara" className="italic text-accent" />
+              </span>
+            </h1>
 
-          <p data-rise style={vars({ "--d": "500ms" })} className="mt-6 text-xl font-medium tracking-tight text-fg sm:text-2xl">
-            I build systems that scale beyond the happy path.
-          </p>
+            <p data-hero-hide className="hero-fade mt-6 text-lg font-medium tracking-tight text-fg sm:text-xl">
+              {profile.role} <span className="text-subtle">— {profile.focus}</span>
+            </p>
 
-          <p data-rise style={vars({ "--d": "580ms" })} className="mt-3 max-w-xl text-base leading-relaxed text-subtle sm:text-lg">
-            4+ years building Node.js and TypeScript systems for international clients: microservices,
-            event-driven Kafka pipelines, REST/GraphQL APIs and cloud applications across travel, insurance,
-            billing, healthcare and enterprise AI.
-          </p>
+            <p data-hero-hide className="hero-fade mt-4 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
+              I build scalable Node.js and TypeScript systems: event-driven Kafka pipelines, microservices and REST/GraphQL
+              APIs for clients in South Africa, Israel and Poland, across travel, insurance, healthcare, EdTech and AI.
+            </p>
 
-          <div data-rise style={vars({ "--d": "660ms" })} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <ButtonLink href="#projects" data-magnetic>
-              Explore My Work
-              <LuArrowRight aria-hidden className="size-4 transition-transform group-hover:translate-x-1" />
-            </ButtonLink>
-            <ButtonLink href={RESUME_PATH} download variant="secondary" data-magnetic>
-              <LuDownload aria-hidden className="size-4 transition-transform group-hover:translate-y-0.5" />
-              Download Resume
-            </ButtonLink>
-            <a href="#contact" className="group inline-flex min-h-11 items-center justify-center gap-1.5 px-2 text-sm font-medium text-subtle transition-colors hover:text-fg">
-              <span className="u-link">Let&apos;s Connect</span>
-              <LuArrowRight aria-hidden className="size-4 transition-transform duration-200 group-hover:translate-x-1" />
-            </a>
+            <div data-hero-hide className="hero-fade mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <ButtonLink href={RESUME_PATH} download={RESUME_FILENAME} type="application/pdf" data-magnetic data-cursor="Save">
+                <LuDownload aria-hidden className="size-4 transition-transform group-hover:translate-y-0.5" />
+                Download Resume
+              </ButtonLink>
+              <ButtonLink href="#contact" variant="secondary" data-magnetic>
+                Contact Me
+                <LuArrowDownRight aria-hidden className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:translate-y-0.5" />
+              </ButtonLink>
+              <SocialLinks className="mt-2 sm:ml-2 sm:mt-0" />
+            </div>
           </div>
-
-          <SocialLinks className="mt-6" />
-
-          <div data-rise style={vars({ "--d": "760ms" })} className="mt-8">
-            <p className="mb-3 font-mono text-[0.7rem] uppercase tracking-wider text-subtle">Core stack</p>
-            <ChipList items={coreStack} label="Core stack" className="gap-2" />
-          </div>
-
-          <p data-rise style={vars({ "--d": "840ms" })} className="mt-8 text-xs text-subtle">
-            <span className="font-mono uppercase tracking-wider">Experience at</span>{" "}
-            <span className="text-muted">{experiences.map((e) => e.company).join(" · ")}</span>
-          </p>
-        </div>
-
-        <div data-rise style={vars({ "--d": "200ms" })} className="hidden lg:block">
-          <PhotoComposition />
         </div>
       </Container>
+
+      <div data-hero-hide aria-hidden className="hero-cue absolute inset-x-0 bottom-6 hidden justify-center lg:flex">
+        <span className="label flex flex-col items-center gap-3">
+          Scroll
+          <span className="relative block h-10 w-px overflow-hidden bg-line">
+            <span className="scroll-cue absolute inset-x-0 top-0 h-1/2 bg-accent" />
+          </span>
+        </span>
+      </div>
     </section>
   );
 }

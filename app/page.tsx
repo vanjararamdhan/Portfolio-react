@@ -1,26 +1,22 @@
 import About from "./_components/about";
-import Architecture from "./_components/architecture";
-import Capabilities from "./_components/capabilities";
 import Contact from "./_components/contact";
 import Education from "./_components/education";
 import Experience from "./_components/experience";
+import Expertise from "./_components/expertise";
 import Hero from "./_components/hero";
-import Leadership from "./_components/leadership";
 import Projects from "./_components/projects";
-import TechStack from "./_components/tech-stack";
+import Skills from "./_components/skills";
 
-// Visitor journey: who → impact → strengths → where → what → how → stack → seniority → background → contact.
+// Visitor journey: who → background → where → what → how → stack → education → contact.
 export default function Home() {
   return (
     <>
       <Hero />
       <About />
-      <Capabilities />
       <Experience />
       <Projects />
-      <Architecture />
-      <TechStack />
-      <Leadership />
+      <Expertise />
+      <Skills />
       <Education />
       <Contact />
     </>
